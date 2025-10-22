@@ -50,8 +50,9 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
 
         samples = samples.to(device, non_blocking=True)
         targets = targets.to(device, non_blocking=True)
-
-        with torch.cuda.amp.autocast():
+        
+        with torch.autocast(device_type=device.type):
+        #with torch.cuda.amp.autocast():
             outputs = model(samples, mask_t_prob=args.mask_t_prob, mask_f_prob=args.mask_f_prob)
             loss = criterion(outputs, targets)
 
@@ -68,7 +69,11 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
         if (data_iter_step + 1) % accum_iter == 0:
             optimizer.zero_grad()
 
-        torch.cuda.synchronize()
+        if device.type == 'cuda':
+            torch.cuda.synchronize()
+        elif device.type == 'mps':
+            torch.mps.synchronize()
+        # CPU no need to synchronize
 
         metric_logger.update(loss=loss_value)
         min_lr = 10.
@@ -115,7 +120,7 @@ def evaluate(data_loader, model, device, dist_eval=False):
         target = target.to(device, non_blocking=True)
 
         # compute output
-        with torch.cuda.amp.autocast():
+        with torch.autocast(device_type=device.type):
             output = model(images)
             # remark: 
             # 1. use concat_all_gather and --dist_eval for faster eval by distributed load over gpus
@@ -123,7 +128,7 @@ def evaluate(data_loader, model, device, dist_eval=False):
             if dist_eval:
                 output = concat_all_gather(output)
                 target = concat_all_gather(target)
-            outputs.append(output)
+            outputs.append(output.float())
             targets.append(target)
             vids.append(vid)
 

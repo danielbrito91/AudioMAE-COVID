@@ -2,6 +2,13 @@
 
 Cloned from https://github.com/facebookresearch/AudioMAE
 
+
+# Training data
+
+- [Coswara](https://zenodo.org/records/7188627)
+- [UK-COVID-19 vocal sounds](https://zenodo.org/records/11167750)
+
+
 This repo hosts the code and models of "[Masked Autoencoders that Listen](http://arxiv.org/abs/2207.06405)" [NeurIPS 2022 [bib](https://github.com/facebookresearch/AudioMAE#citation)].
 
 

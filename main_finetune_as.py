@@ -435,7 +435,7 @@ def main(args):
     )
     optimizer = torch.optim.AdamW(param_groups, lr=args.lr)
 
-    loss_scaler = NativeScaler()
+    loss_scaler = NativeScaler(device=device)
 
     if args.use_soft:
         criterion = SoftTargetCrossEntropy() 

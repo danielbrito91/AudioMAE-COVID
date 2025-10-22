@@ -1,11 +1,10 @@
 # Core ML/DL packages
 # Install PyTorch separately based on your platform:
-# CPU: uv pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
-# CUDA: uv pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
-# Old CUDA 10.2: uv pip install torch==1.7.0+cu102 torchvision==0.8.1+cu102 torchaudio==0.7.0 -f https://download.pytorch.org/whl/torch_stable.html
+# uv pip install --no-cache-dir \
+#   'torch==1.13.1' 'torchvision==0.14.1' 'torchaudio==0.13.1'
 
 # Data science essentials
-numpy==1.21.5
+numpy==1.23.5
 scipy==1.8.0
 pandas==1.4.1
 matplotlib==3.5.1
@@ -19,7 +18,7 @@ ipywidgets==7.6.5
 notebook==6.4.8
 
 # Audio/Video processing
-librosa==0.9.1
+librosa==0.10.0.post2
 soundfile==0.10.3.post1
 audioread==2.1.9
 ffmpeg-python==0.2.0
@@ -51,6 +50,10 @@ tensorboard==2.8.0
 tensorboard-data-server==0.6.1
 tensorboard-plugin-wit==1.8.1
 torch-tb-profiler==0.3.1
+
+# Model zoo / math
+timm==0.3.2
+sympy<1.13
 
 # Computer vision / CLIP
 # clip  # Install from GitHub: uv pip install git+https://github.com/openai/CLIP.git
@@ -105,8 +108,8 @@ pytz==2021.3
 cycler==0.11.0
 fonttools==4.29.1
 kiwisolver==1.3.2
-numba
-llvmlite
+numba==0.57.1
+llvmlite==0.40.1
 
 # Testing
 pytest==7.1.2
