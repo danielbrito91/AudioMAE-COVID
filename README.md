@@ -1,15 +1,25 @@
-# Audio-MAE
+# Audio-MAE for COVID-19 Detection
 
 Cloned from https://github.com/facebookresearch/AudioMAE
 
+This repository contains the implementation of our technical report evaluating pre-trained audio models on COVID-19 detection datasets.
 
-# Training data
+**arXiv Technical Report**: https://arxiv.org/abs/2511.14939
 
-- [Coswara](https://zenodo.org/records/7188627)
-- [UK-COVID-19 vocal sounds](https://zenodo.org/records/11167750)
+## Academic Context
 
+This work was developed for the Deep Learning (_Aprendizado Profundo_) course at the Graduate Program in Computer Science (PPGCC) at UNESP, taught by Prof. Dr. Denis Henrique Pinheiro Salvadeo.\
 
-This repo hosts the code and models of "[Masked Autoencoders that Listen](http://arxiv.org/abs/2207.06405)" [NeurIPS 2022 [bib](https://github.com/facebookresearch/AudioMAE#citation)].
+The research is part of the SPIRA-BM project and supports the article "Contrasting Deep Learning Approaches for Respiratory Insufficiency and SpO2 Estimation from Audio Signals".
+
+## Training data
+
+- [Coswara](https://zenodo.org/records/7188627) - Classic COVID-19 dataset with breathing, cough, and voice recordings
+- [UK-COVID-19 vocal sounds](https://zenodo.org/records/11167750) - Large-scale crowdsourced cough audio dataset
+
+## About Audio-MAE
+
+This repo is based on "[Masked Autoencoders that Listen](http://arxiv.org/abs/2207.06405)" [NeurIPS 2022 [bib](https://github.com/facebookresearch/AudioMAE#citation)].
 
 
 <p align="center">
@@ -35,7 +45,7 @@ source path_to_env/bin/activate
 ```
 
 ### 2. Prepare data:
-Please download AudioSet at [here](https://research.google.com/audioset/). Due to copyright we cannot release the data. The data annotation json parased and used in this work is available [here](https://drive.google.com/file/d/1cAiaL69HFm1zSW4hqFQpdhNfHiVKBFNA/view?usp=share_link). The format follows the one in [AST](https://github.com/YuanGongND/ast). Please be sure to modify the path in the scripts accordingly to reflect your own setup.
+For our COVID-19 detection experiments, download the datasets available at Zenodo.
 
 ### 3. Pretrianing on AudioSet-2M
 For the brave ones to pre-train on AudioSet-2M: Please use the pretrain_audioset2M.sh by:
@@ -43,10 +53,14 @@ For the brave ones to pre-train on AudioSet-2M: Please use the pretrain_audioset
 bash pretrain_audioset2M.sh
 ```
 ### 4. Fine-tuning on AudioSet-2M and AudioSet-20K
-For Finetuning from an AuioSet-pretrained model. Please use your own pretrained model from the previous step or download our pre-trained [ckpt](https://drive.google.com/file/d/1ni_DV4dRf7GxM8k-Eirx71WP9Gg89wwu/view?usp=share_link) and put it under ./ckpt/. Please use the script submit_ft_mask_bal.sh by 
+For fine-tuning from an AudioSet-pretrained model on COVID-19 data: Please use your own pretrained model or download the pre-trained [ckpt](https://drive.google.com/file/d/1ni_DV4dRf7GxM8k-Eirx71WP9Gg89wwu/view?usp=share_link) and put it under ./ckpt/. Please use the script submit_ft_mask_bal.sh by 
 ```
 bash submit_ft_mask_bal.sh 2e-4 0.2 0.2 ./ckpt/pretrained.pth"
 ```
+**Note**: Our COVID-19 experiments use 60 epochs with learning rate 2e-4 on demographically balanced datasets (1,000-2,000 samples after stratification).
+
+### Original Fine-tuning on AudioSet-2M and AudioSet-20K
+
 This will perform weighted distributed sampling on the unbalanded Audioset to fine-tuned the model with class-balanced data for 100 epochs. The resulting mAP on the AudioSet should be around 47.3. We provide our finetuned checkpoint at [here](https://drive.google.com/file/d/18EsFOyZYvBYHkJ7_n7JFFWbj6crz01gq/view?usp=share_link). An example log of finetuning is as follows:
 ```
 [07:10:32.717347] log_dir: /checkpoint/berniehuang/experiments/419909
@@ -107,13 +121,20 @@ Per-class AP can be found under ./aps.txt and per-example results is inf_output.
 1. ViT-B, AS-2M [pretrained](https://drive.google.com/file/d/1ni_DV4dRf7GxM8k-Eirx71WP9Gg89wwu/view?usp=share_link)
 2. ViT-B, AS-2M pretrained+[finetuned](https://drive.google.com/file/d/18EsFOyZYvBYHkJ7_n7JFFWbj6crz01gq/view?usp=share_link)
 
-### Updates
-- [x] Code and Model Release
-- [x] Provide conda-pack envs
-- [ ] Notebook demos for reconstruction (legal blocked)
-- [ ] Additional exps
-
 ### Citation
+If you use this code for COVID-19 detection research, please cite our technical report:
+
+```
+@misc{britoFinetuningPretrainedAudio2025,
+  title = {Fine-Tuning {{Pre-trained Audio Models}} for {{COVID-19 Detection}}: {{A Technical Report}}},
+  author = {de Brito, Daniel Oliveira and de Souza, Let{\'i}cia Gabriella and Gauy, Marcelo Matheus and Finger, Marcelo and Junior, Arnaldo Candido},
+  year = 2025,
+  doi = {10.48550/arXiv.2511.14939}
+}
+```
+
+Also cite the original Audio-MAE paper:
+
 ```
 @inproceedings{huang2022amae,
   title = {Masked Autoencoders that Listen},
@@ -122,12 +143,6 @@ Per-class AP can be found under ./aps.txt and per-example results is inf_output.
   year = {2022}
 }
 ```
-
-### Contact
-Please contact Bernie Huang (berniehuang@meta.com) if you have any questions. Thank you.
-
-### Reference
-The codebase is based on the awesome [MAE](https://github.com/facebookresearch/mae) and [AST](https://github.com/YuanGongND/ast) repos.
 
 ### License
 This project is under the CC-BY 4.0 license. See [LICENSE](LICENSE) for details.
