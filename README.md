@@ -8,7 +8,7 @@ This repository contains the implementation of our technical report evaluating p
 
 ## Academic Context
 
-This work was developed for the Deep Learning (_Aprendizado Profundo_) course at the Graduate Program in Computer Science (PPGCC) at UNESP, taught by Prof. Dr. Denis Henrique Pinheiro Salvadeo.\
+This work was developed for the Deep Learning (_Aprendizado Profundo_) course at the Graduate Program in Computer Science (PPGCC) at UNESP, taught by Prof. Dr. Denis Henrique Pinheiro Salvadeo.
 
 The research is part of the SPIRA-BM project and supports the article "Contrasting Deep Learning Approaches for Respiratory Insufficiency and SpO2 Estimation from Audio Signals".
 
