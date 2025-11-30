@@ -173,10 +173,28 @@ class AudiosetDataset(Dataset):
         mag = np.random.beta(10, 10) + 0.5
         return torch.Tensor(rolled_waveform*mag)
 
+    def _apply_window(self, waveform, sr, target_duration_sec=4):
+        target_samples = int(sr * target_duration_sec) 
+        current_samples = waveform.shape[1]
+        if current_samples > target_samples:
+            is_train = self.audio_conf.get('mode') == 'train'   
+            if is_train:
+                start = torch.randint(0, current_samples - target_samples + 1, (1,)).item()
+            else:
+                start = (current_samples - target_samples) // 2
+            waveform = waveform[:, start:start + target_samples]
+
+        elif current_samples < target_samples:
+            padding_needed = target_samples - current_samples
+            waveform = torch.nn.functional.pad(waveform, (0, padding_needed))
+        
+        return waveform
+
     def _wav2fbank(self, filename, filename2=None):
         if filename2 == None:
             waveform, sr = torchaudio.load(filename)
             waveform = waveform - waveform.mean()
+            waveform = self._apply_window(waveform, sr)
             if self.roll_mag_aug:
                 waveform = self._roll_mag_aug(waveform)
         # mixup
@@ -187,19 +205,23 @@ class AudiosetDataset(Dataset):
             waveform1 = waveform1 - waveform1.mean()
             waveform2 = waveform2 - waveform2.mean()
 
+            waveform1 = self._apply_window(waveform1, sr)
+            waveform2 = self._apply_window(waveform2, sr)
+
             if self.roll_mag_aug:
                 waveform1 = self._roll_mag_aug(waveform1)
                 waveform2 = self._roll_mag_aug(waveform2)
 
-            if waveform1.shape[1] != waveform2.shape[1]:
-                if waveform1.shape[1] > waveform2.shape[1]:
-                    # padding
-                    temp_wav = torch.zeros(1, waveform1.shape[1])
-                    temp_wav[0, 0:waveform2.shape[1]] = waveform2
-                    waveform2 = temp_wav
-                else:
-                    # cutting
-                    waveform2 = waveform2[0, 0:waveform1.shape[1]]
+            # Done via _apply_window
+            # if waveform1.shape[1] != waveform2.shape[1]:
+            #     if waveform1.shape[1] > waveform2.shape[1]:
+            #         # padding
+            #         temp_wav = torch.zeros(1, waveform1.shape[1])
+            #         temp_wav[0, 0:waveform2.shape[1]] = waveform2
+            #         waveform2 = temp_wav
+            #     else:
+            #         # cutting
+            #         waveform2 = waveform2[0, 0:waveform1.shape[1]]
 
             # sample lambda from beta distribtion
             mix_lambda = np.random.beta(10, 10)

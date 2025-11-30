@@ -1,42 +1,41 @@
 import pandas as pd
-
+import json
 import numpy as np
 
 from sklearn.model_selection import train_test_split
 
-COSWARA_METADATA_PATH = 'data/iiscleap-Coswara-Data-bf300ae/combined_data.csv'
-COSWARA_DURS_PATH = 'data/coswara_durations.csv'
-AUDIO_COL = 'cough-heavy'
-AGE_COL = 'a'
-GENDER_COL = 'g'
-SEED = 0
+from pathlib import Path
 
-coswara_map = {
+COUGHVID_METADATA_PATH = 'data/coughvid/coughvid_20211012/metadata_compiled.csv'
+COUGHVIDS_DURS_PATH = 'data/coughvid_durations.csv'
+COUGHVID_BASE_PATH = 'data/coughvid/coughvid_20211012'
+AGE_COL = 'age'
+GENDER_COL = 'gender'
+SEED = 0
+COUGHVID_TRAIN_PATH = 'data/coughvid_train.json'
+COUGHVID_EVAL_PATH = 'data/coughvid_eval.json'
+
+coughvid_map = {
+    'COVID-19': 'COVID_positive',
     'healthy': 'COVID_negative',
-    'no_resp_illness_exposed': 'exclude',
-    'positive_asymp': 'COVID_positive',
-    'positive_mild': 'COVID_positive',
-    'positive_moderate': 'COVID_positive',
-    'recovered_full': 'exclude',
-    'resp_illness_not_identified': 'exclude',
-    'under_validation': 'exclude',
+    'symptomatic': 'exclude',
 }
 
-def read_coswara_metadata():
-    df = pd.read_csv(COSWARA_METADATA_PATH)
-    df['label'] = df['covid_status'].map(coswara_map)
+def read_coughvid_metadata():
+    df = pd.read_csv(COUGHVID_METADATA_PATH)
+    df['label'] = df['status'].map(coughvid_map)
     
     return df
 
-def read_coswara_durations():
-    df = pd.read_csv(COSWARA_DURS_PATH)
-    return df
+def read_coughvid_durations():
+    df = pd.read_csv(COUGHVIDS_DURS_PATH)
+    return df.rename(columns={'id': 'uuid'})
 
-def merge_coswara_metadata_and_durations(metadata: pd.DataFrame, durations: pd.DataFrame):
-    return metadata.merge(durations, on='id', how='left', validate='1:1')
+def merge_coughvid_metadata_and_durations(metadata: pd.DataFrame, durations: pd.DataFrame):
+    return metadata.merge(durations, on='uuid', how='left', validate='1:1')
 
-def filter_coswara(metadata_with_durations: pd.DataFrame):
-    df_filtered = metadata_with_durations.loc[metadata_with_durations[AUDIO_COL] > 0]
+def filter_coughvid(metadata_with_durations: pd.DataFrame):
+    df_filtered = metadata_with_durations.loc[metadata_with_durations['duration'] > 0]
     df_filtered = df_filtered[df_filtered['label'] != 'exclude']
     df_filtered = df_filtered.dropna(subset=[AGE_COL, GENDER_COL])
 
@@ -49,7 +48,6 @@ def add_strata_cols(df: pd.DataFrame) -> pd.DataFrame:
     bins = [0, 18, 30, 40, 50, 60, np.inf]
     labels = ['0-17', '18-29', '30-39', '40-49', '50-59', '60+']
     
-    # Use .assign() to create new columns without SettingWithCopyWarning
     df_with_strata = df.assign(
         age_bin = pd.cut(df[AGE_COL], bins=bins, labels=labels, right=False)
     )
@@ -62,7 +60,7 @@ def add_strata_cols(df: pd.DataFrame) -> pd.DataFrame:
     )
     return df_with_strata
 
-def balance_coswara(metadata_clean: pd.DataFrame):
+def balance_coughvid(metadata_clean: pd.DataFrame):
     """
     Balances the dataset by matching the majority class's age/gender
     distribution to the minority class's distribution.
@@ -87,12 +85,10 @@ def balance_coswara(metadata_clean: pd.DataFrame):
     print("\nTarget distribution from minority class:")
     print(target_strata_counts)
 
-    # 5. (User Step 2) Sample similar in the major class
     print("\nSampling majority class to match target distribution...")
     sampled_groups = []
     
     for strata_name, target_count in target_strata_counts.items():
-        # Find all matching samples in the majority class
         majority_strata_group = df_majority[df_majority['strata'] == strata_name]
         current_available = len(majority_strata_group)
 
@@ -111,7 +107,7 @@ def balance_coswara(metadata_clean: pd.DataFrame):
 
     if not sampled_groups:
         print("ERROR: No samples were selected. Check your data and strata.")
-        return pd.DataFrame() # Return empty df
+        return pd.DataFrame()
         
     df_majority_balanced = pd.concat(sampled_groups)
     
@@ -120,3 +116,40 @@ def balance_coswara(metadata_clean: pd.DataFrame):
     print(f"\nFinal balanced dataset size: {len(df_balanced)} rows.")
     
     return df_balanced.sample(frac=1, random_state=SEED).reset_index(drop=True)
+
+def split_coughvid(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+    return train_test_split(
+        df,
+        test_size=0.2,
+        random_state=SEED,
+        stratify=df['label'])
+
+def create_coughvid_filelist(coughvid_df: pd.DataFrame) -> dict:
+    coughvid_filelist = {'data': []}
+    for i, row in coughvid_df.iterrows():
+        audio_path = f'{COUGHVID_BASE_PATH}/{row["uuid"]}.wav'
+        if not Path(audio_path).exists():
+            print(f'{audio_path} does not exist')
+            continue
+
+        covid_status = row['label']
+        
+        coughvid_filelist['data'].append(
+            {'wav': audio_path,
+            'labels': covid_status}
+        )
+    return coughvid_filelist
+
+if __name__ == '__main__':
+    coughvid_df = read_coughvid_metadata()
+    durations = read_coughvid_durations()
+    coughvid_df = merge_coughvid_metadata_and_durations(coughvid_df, durations)
+    coughvid_df = filter_coughvid(coughvid_df)
+    balanced_df = balance_coughvid(coughvid_df)
+    train_df, eval_df = split_coughvid(balanced_df)
+    train_filelist = create_coughvid_filelist(train_df)
+    eval_filelist = create_coughvid_filelist(eval_df)
+    with open(COUGHVID_TRAIN_PATH, 'w') as f:
+        json.dump(train_filelist, f, indent=4)
+    with open(COUGHVID_EVAL_PATH, 'w') as f:
+        json.dump(eval_filelist, f, indent=4)
