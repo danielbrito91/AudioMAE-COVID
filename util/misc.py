@@ -18,8 +18,7 @@ from pathlib import Path
 
 import torch
 import torch.distributed as dist
-from torch._six import inf
-
+from math import inf
 
 class SmoothedValue(object):
     """Track a series of values and provide access to smoothed values over a
@@ -254,7 +253,7 @@ class NativeScalerWithGradNormCount:
     def __init__(self, device: torch.device):
         self.device_type = device.type
         if device.type == 'cuda':
-            self._scaler = torch.cuda.amp.GradScaler()
+            self._scaler = torch.amp.GradScaler()
         else:
             self._scaler = None
 

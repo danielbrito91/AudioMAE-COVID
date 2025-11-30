@@ -3,6 +3,11 @@
 # uv pip install --no-cache-dir \
 #   'torch==1.13.1' 'torchvision==0.14.1' 'torchaudio==0.13.1'
 
+# RTX 5090
+# uv pip install --no-cache-dir --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu128
+# uv pip install torchcodec
+# apt get ffmpeg
+
 # Data science essentials
 numpy==1.23.5
 scipy==1.8.0
@@ -19,7 +24,7 @@ notebook==6.4.8
 
 # Audio/Video processing
 librosa==0.10.0.post2
-soundfile==0.10.3.post1
+soundfile>=0.12.1
 audioread==2.1.9
 ffmpeg-python==0.2.0
 # decord==0.6.0  # Install separately: uv pip install git+https://github.com/dmlc/decord.git

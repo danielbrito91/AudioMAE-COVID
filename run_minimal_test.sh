@@ -13,7 +13,8 @@ export OMP_NUM_THREADS=1
 uv run main_finetune_as.py \
 --log_dir $LOG_DIR \
     --output_dir $OUTPUT_DIR \
-    --device 'cpu' \
+    --device 'cuda' \
+    --mixup 0.5 \
     --num_workers 2 \
     --model vit_base_patch16 \
     --finetune $PRETRAINED_CKPT \
